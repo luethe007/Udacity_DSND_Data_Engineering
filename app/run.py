@@ -2,39 +2,21 @@ import json
 import plotly
 import pickle
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
 
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
+# pip install xgboost via terminal
 from xgboost import XGBClassifier
-
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar, Histogram
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
+import sys
+sys.path.append('../models/')
+from train_classifier import calculateTextLength, tokenize
 
 app = Flask(__name__)
-
-class calculateTextLength(BaseEstimator, TransformerMixin):
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, X):
-        X_tagged = pd.Series(X).apply(len)
-        return pd.DataFrame(X_tagged)
-
-def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
-
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
-
-    return clean_tokens
 
 # load data
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
@@ -49,7 +31,6 @@ model = pickle.load(open('../models/classifier.pkl', 'rb'))
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
@@ -59,7 +40,6 @@ def index():
     msg_len = df.message.apply(lambda x: len(x.split()))
     msg_len = msg_len[~((msg_len-msg_len.mean()).abs() > 3*msg_len.std())]
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -124,14 +104,6 @@ def index():
             }
         }
     ]
-    graph_two = []
-
-   
-
-    layout_two = dict(title = 'Chart Two',
-                xaxis = dict(title = 'x-axis label',),
-                yaxis = dict(title = 'y-axis label'),
-                )
     
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
@@ -157,11 +129,9 @@ def go():
         classification_result=classification_results
     )
 
-
 def main():
     
     app.run(host='0.0.0.0', port=3001, debug=True)
-
 
 if __name__ == '__main__':
     main()

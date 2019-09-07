@@ -18,7 +18,6 @@ from xgboost import XGBClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import train_test_split
-
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import f1_score
@@ -27,15 +26,20 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.base import BaseEstimator, TransformerMixin
 
 def load_data(database_filepath):
+    '''
+    Read the data from a SQLIte database and return features and labels
+    '''
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql_query('SELECT * FROM df', engine)
-    df['related'] = df['related'].map({0:0, 1:1, 2:1})
     X = df['message'].values
     output_columns = df.iloc[:,4:].columns
     y = df.iloc[:,4:].values
     return X, y, output_columns
     
 def tokenize(text):
+    '''
+    Case normalize, lemmatize and tokenize text
+    '''
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
     clean_tokens = []
@@ -47,6 +51,9 @@ def tokenize(text):
     return clean_tokens
 
 class calculateTextLength(BaseEstimator, TransformerMixin):
+    '''
+    Custom transformer to calculate the text length
+    '''
     def fit(self, x, y=None):
         return self
 
@@ -55,6 +62,9 @@ class calculateTextLength(BaseEstimator, TransformerMixin):
         return pd.DataFrame(X_tagged)
 
 def build_model():
+    '''
+    Process text and perform multi-output classification on 36 categories
+    '''
     pipeline = Pipeline([
             ('features', FeatureUnion([
                 ('text_pipeline', Pipeline([
@@ -74,6 +84,9 @@ def build_model():
     return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Print the F1 score, precision and recall for each category of the test set
+    '''
     y_pred = model.predict(X_test)    
     i = 0
     for col in category_names:
@@ -89,6 +102,9 @@ def evaluate_model(model, X_test, Y_test, category_names):
         i+=1
 
 def save_model(model, model_filepath):
+    '''
+    Store the trained model
+    '''
     pickle.dump(model, open(model_filepath, "wb"))
 
 def main():
