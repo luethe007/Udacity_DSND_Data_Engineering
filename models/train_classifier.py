@@ -73,12 +73,12 @@ def build_model():
                 ])),
                 ('text_length', calculateTextLength())
             ])),
-            ('clf', MultiOutputClassifier(XGBClassifier()))
+            ('clf', MultiOutputClassifier(XGBClassifier(learning_rate=0.1, n_estimators=140, gamma=0, scale_pos_weight=1, seed=27)))
         ])
     # only the best parameters are set to reduce training time
     parameters = {
-        'clf__estimator__max_depth':[6],
-        'clf__estimator__min_child_weight':[5]
+        'clf__estimator__max_depth':[10],
+        'clf__estimator__min_child_weight':[3]
     }
     cv = GridSearchCV(pipeline, param_grid=parameters)
     return cv
@@ -120,14 +120,15 @@ def main():
         print('Training model...')
         with active_session():     
             model.fit(X_train, Y_train)
+  
+        print('Saving model...\n    MODEL: {}'.format(model_filepath))
+        save_model(model, model_filepath)
+        print('Trained model saved!')
         
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
 
-        print('Saving model...\n    MODEL: {}'.format(model_filepath))
-        save_model(model, model_filepath)
-
-        print('Trained model saved!')
+        
 
     else:
         print('Please provide the filepath of the disaster messages database '\
