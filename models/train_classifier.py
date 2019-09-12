@@ -73,12 +73,17 @@ def build_model():
                 ])),
                 ('text_length', calculateTextLength())
             ])),
-            ('clf', MultiOutputClassifier(XGBClassifier(learning_rate=0.1, n_estimators=140, gamma=0, scale_pos_weight=1, seed=27)))
+            ('clf', MultiOutputClassifier(XGBClassifier(learning_rate=0.1, scale_pos_weight=1, seed=27)))
         ])
     # only the best parameters are set to reduce training time
     parameters = {
-        'clf__estimator__max_depth':[10],
-        'clf__estimator__min_child_weight':[3]
+        'clf__estimator__max_depth': [10],
+        'clf__estimator__min_child_weight': [3],
+        'clf__estimator__gamma': [0.0],
+        'clf__estimator__subsample': [0.7],
+        'clf__estimator__colsample_bytree' :[0.8],
+        'clf__estimator__reg_alpha': [0.01],
+        'clf__estimator__n_estimators': [200]
     }
     cv = GridSearchCV(pipeline, param_grid=parameters)
     return cv
